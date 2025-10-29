@@ -7,6 +7,13 @@ from PIL import Image
 import os
 from pathlib import Path
 
+
+"""
+Logic is from https://stackoverflow.com/a/71822506
+Adding random nose in an even distribution across the image
+Doing it in 3 layers helps creating variing size of grain, as we downscale and then upscale 
+Poission distribution 
+"""
 def gen_noise_mask(rows, cols, intf, intm, intl, mode):
     # Full resolution
     noise_im1 = np.zeros((rows, cols))
@@ -42,10 +49,10 @@ def noiseGenerator(im: Image, intf, intm, intl, mode):
     rows, cols, depth = im_arr.shape
 
     rgba_array = np.zeros((rows, cols, depth), 'float64')
-    for d in range(0, depth):
+    for d in range(0, depth): ## depth is the number of color channels, will typically be 3 for RGB, but could also contain alpha
         rgba_array[..., d] += gen_noise_mask(rows, cols, intf, intm, intl, mode)
     noisy_img = im_arr / 255 + rgba_array  # Add noise_im to the input image.
-    noisy_img = np.round((255 * noisy_img)).clip(0, 255).astype(np.uint8)
+    noisy_img = np.round((255 * noisy_img)).clip(0, 255).astype(np.uint8) # clip image to 0-255 bounds
     return Image.fromarray(noisy_img)
 
 
@@ -56,9 +63,9 @@ class Modes(Enum):
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser(description="Grainer script to add a bit of character to your photos")
     parser.add_argument("-p", "--path", type=str, help="path to image")
-    parser.add_argument("-if", "--intensity_fine", type=float, default=0.01, help="Intensity of the fine grain")
-    parser.add_argument("-im", "--intensity_medium", type=float, default=0.01, help="Intensity of the medium grain")
-    parser.add_argument("-il", "--intensity_large", type=float, default=0.01, help="Intensity of the large grain")
+    parser.add_argument("-if", "--intensity_fine", type=float, default=0.01, help="Intensity of the fine grain, unused by poission")
+    parser.add_argument("-im", "--intensity_medium", type=float, default=0.01, help="Intensity of the medium grain, unused by poission")
+    parser.add_argument("-il", "--intensity_large", type=float, default=0.01, help="Intensity of the large grain, unused by poission")
     parser.add_argument("-m", "--mode", type=Modes, default=Modes.gaussian, help="How to apply noise to image, gaussian, poisson or localvar")
 
     args = parser.parse_args()
