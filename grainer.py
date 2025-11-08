@@ -16,7 +16,7 @@ Poission distribution
 """
 def gen_noise_mask(rows, cols, intf, intm, intl, mode):
     # Full resolution
-    noise_im1 = np.zeros((rows, cols))
+    noise_im1 = np.zeros((rows, cols, 3))
     if mode == Modes.poisson.value: 
         noise_im1 = random_noise(noise_im1, mode=mode, clip=False)
     elif mode == Modes.gaussian.value:
@@ -24,7 +24,7 @@ def gen_noise_mask(rows, cols, intf, intm, intl, mode):
 
 
     # Half resolution
-    noise_im2 = np.zeros((rows // 2, cols // 2))
+    noise_im2 = np.zeros((rows // 2, cols // 2, 3))
     if mode == Modes.poisson.value: 
         noise_im2 = random_noise(noise_im2, mode=mode, clip=False)
     elif mode == Modes.gaussian.value:
@@ -32,7 +32,7 @@ def gen_noise_mask(rows, cols, intf, intm, intl, mode):
     noise_im2 = resize(noise_im2, (rows, cols))  # Upscale to original image size
 
     # Quarter resolution
-    noise_im3 = np.zeros((rows // 4, cols // 4))
+    noise_im3 = np.zeros((rows // 4, cols // 4, 3))
     if mode == Modes.poisson.value: 
         noise_im3 = random_noise(noise_im3, mode=mode, clip=False)
     elif mode == Modes.gaussian.value:
@@ -48,10 +48,9 @@ def noiseGenerator(im: Image, intf, intm, intl, mode):
 
     rows, cols, depth = im_arr.shape
 
-    rgba_array = np.zeros((rows, cols, depth), 'float64')
-    for d in range(0, depth): ## depth is the number of color channels, will typically be 3 for RGB, but could also contain alpha
-        rgba_array[..., d] += gen_noise_mask(rows, cols, intf, intm, intl, mode)
-    noisy_img = im_arr / 255 + rgba_array  # Add noise_im to the input image.
+    rgb_array = gen_noise_mask(rows, cols, intf, intm, intl, mode)
+
+    noisy_img = im_arr / 255 + rgb_array  # Add noise_im to the input image.
     noisy_img = np.round((255 * noisy_img)).clip(0, 255).astype(np.uint8) # clip image to 0-255 bounds
     return Image.fromarray(noisy_img)
 
